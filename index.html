@@ -1,0 +1,423 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud-Based File Storage System</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f0f4f8;
+            color: #263238;
+        }
+
+        header {
+            background: #1565c0;
+            color: white;
+            padding: 22px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin-bottom: 8px;
+            font-size: 28px;
+        }
+
+        header p {
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 35px auto;
+            padding: 20px;
+        }
+
+        .upload-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+
+        .upload-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+
+        .upload-box h2 {
+            margin-bottom: 12px;
+            color: #1565c0;
+        }
+
+        .upload-box p {
+            margin-bottom: 20px;
+            color: #607d8b;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-btn {
+            display: inline-block;
+            background: #1565c0;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            font-size: 15px;
+        }
+
+        .upload-btn:hover {
+            background: #0d47a1;
+        }
+
+        .section-title {
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .section-title h2 {
+            color: #263238;
+        }
+
+        #search {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .file-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 18px;
+        }
+
+        .file-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+            overflow-wrap: anywhere;
+        }
+
+        .file-icon {
+            font-size: 35px;
+            margin-bottom: 12px;
+        }
+
+        .file-card h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .file-info {
+            color: #78909c;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .download-btn,
+        .delete-btn {
+            flex: 1;
+            padding: 9px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .download-btn {
+            background: #2e7d32;
+        }
+
+        .delete-btn {
+            background: #d32f2f;
+        }
+
+        .download-btn:hover {
+            background: #1b5e20;
+        }
+
+        .delete-btn:hover {
+            background: #b71c1c;
+        }
+
+        #emptyMessage {
+            text-align: center;
+            padding: 30px;
+            color: #78909c;
+            background: white;
+            border-radius: 10px;
+            grid-column: 1 / -1;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 35px;
+            background: #263238;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 15px auto;
+                padding: 12px;
+            }
+
+            header h1 {
+                font-size: 22px;
+            }
+
+            .upload-box {
+                padding: 22px 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>☁️ Cloud File Storage System</h1>
+        <p>Upload, manage, and download your files easily</p>
+    </header>
+
+    <div class="container">
+
+        <section class="upload-box">
+            <div class="upload-icon">📂</div>
+
+            <h2>Upload Your Files</h2>
+
+            <p>Select files from your computer to add them to your file list.</p>
+
+            <label for="fileInput" class="upload-btn">
+                + Choose Files
+            </label>
+
+            <input type="file" id="fileInput" multiple>
+        </section>
+
+        <section>
+            <div class="section-title">
+                <h2>My Files</h2>
+
+                <input
+                    type="text"
+                    id="search"
+                    placeholder="Search files..."
+                    aria-label="Search files"
+                >
+            </div>
+
+            <div class="file-list" id="fileList">
+                <div id="emptyMessage">
+                    No files uploaded yet. Choose files to get started!
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>Cloud-Based File Storage System | Mini Project</p>
+    </footer>
+
+    <script>
+        const fileInput = document.getElementById("fileInput");
+        const fileList = document.getElementById("fileList");
+        const searchInput = document.getElementById("search");
+
+        // Store files temporarily in browser memory.
+        let files = [];
+
+        function formatSize(bytes) {
+            if (bytes < 1024) {
+                return bytes + " B";
+            }
+
+            if (bytes < 1024 * 1024) {
+                return (bytes / 1024).toFixed(2) + " KB";
+            }
+
+            return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+        }
+
+        function getFileIcon(fileName) {
+            const extension = fileName.split(".").pop().toLowerCase();
+
+            if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension)) {
+                return "🖼️";
+            }
+
+            if (extension === "pdf") {
+                return "📕";
+            }
+
+            if (["doc", "docx"].includes(extension)) {
+                return "📝";
+            }
+
+            if (["xls", "xlsx", "csv"].includes(extension)) {
+                return "📊";
+            }
+
+            if (["mp4", "mov", "avi"].includes(extension)) {
+                return "🎬";
+            }
+
+            if (["mp3", "wav"].includes(extension)) {
+                return "🎵";
+            }
+
+            if (["zip", "rar"].includes(extension)) {
+                return "🗜️";
+            }
+
+            return "📄";
+        }
+
+        fileInput.addEventListener("change", function () {
+            const selectedFiles = Array.from(fileInput.files);
+
+            selectedFiles.forEach(function (file) {
+                files.push({
+                    id: crypto.randomUUID(),
+                    name: file.name,
+                    size: file.size,
+                    type: file.type || "Unknown",
+                    file: file,
+                    uploadedAt: new Date().toLocaleString()
+                });
+            });
+
+            renderFiles(searchInput.value);
+
+            // Allow selecting the same file again.
+            fileInput.value = "";
+        });
+
+        function renderFiles(searchText = "") {
+            fileList.innerHTML = "";
+
+            const filteredFiles = files.filter(function (file) {
+                return file.name.toLowerCase().includes(
+                    searchText.toLowerCase()
+                );
+            });
+
+            if (filteredFiles.length === 0) {
+                const message = document.createElement("div");
+                message.id = "emptyMessage";
+
+                message.textContent = searchText
+                    ? "No matching files found."
+                    : "No files uploaded yet. Choose files to get started!";
+
+                fileList.appendChild(message);
+                return;
+            }
+
+            filteredFiles.forEach(function (file) {
+                const card = document.createElement("div");
+                card.className = "file-card";
+
+                const icon = document.createElement("div");
+                icon.className = "file-icon";
+                icon.textContent = getFileIcon(file.name);
+
+                const title = document.createElement("h3");
+                title.textContent = file.name;
+
+                const info = document.createElement("div");
+                info.className = "file-info";
+                info.textContent =
+                    "Size: " + formatSize(file.size) +
+                    " | Uploaded: " + file.uploadedAt;
+
+                const actions = document.createElement("div");
+                actions.className = "actions";
+
+                const downloadButton = document.createElement("button");
+                downloadButton.className = "download-btn";
+                downloadButton.textContent = "Download";
+
+                downloadButton.addEventListener("click", function () {
+                    const url = URL.createObjectURL(file.file);
+                    const link = document.createElement("a");
+
+                    link.href = url;
+                    link.download = file.name;
+
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+
+                    setTimeout(function () {
+                        URL.revokeObjectURL(url);
+                    }, 1000);
+                });
+
+                const deleteButton = document.createElement("button");
+                deleteButton.className = "delete-btn";
+                deleteButton.textContent = "Delete";
+
+                deleteButton.addEventListener("click", function () {
+                    const confirmDelete = confirm(
+                        "Do you want to delete " + file.name + "?"
+                    );
+
+                    if (confirmDelete) {
+                        files = files.filter(function (item) {
+                            return item.id !== file.id;
+                        });
+
+                        renderFiles(searchInput.value);
+                    }
+                });
+
+                actions.appendChild(downloadButton);
+                actions.appendChild(deleteButton);
+
+                card.appendChild(icon);
+                card.appendChild(title);
+                card.appendChild(info);
+                card.appendChild(actions);
+
+                fileList.appendChild(card);
+            });
+        }
+
+        searchInput.addEventListener("input", function () {
+            renderFiles(searchInput.value);
+        });
+
+    </script>
+
+</body>
+</html>
+```
